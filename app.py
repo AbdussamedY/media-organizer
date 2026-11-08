@@ -21,6 +21,8 @@ from core.database import (
     get_statistics,
     get_latest_scan_report,
     get_next_pending_media,
+    get_pending_media_by_id,
+    get_pending_media_navigation,
     mark_media_moved
 )
 
@@ -80,28 +82,46 @@ def scan():
 @app.route("/classify")
 def classify():
 
-    media = get_next_pending_media()
+    requested_media_id = request.args.get("media_id", type=int)
 
+    if requested_media_id is not None:
+        media = get_pending_media_by_id(requested_media_id)
+    else:
+        media = None
+
+    # Si aucun identifiant n'est fourni, ou si le média n'est plus
+    # en attente, on revient au premier média de la file.
     if media is None:
-        return render_template(
-            "classify.html",
-            media=None,
-            destination_folders=get_destination_folders()
-        )
+        media = get_next_pending_media()
+
+    navigation = (
+        get_pending_media_navigation(media["id"])
+        if media is not None
+        else {
+            "position": 0,
+            "total": 0,
+            "previous_id": None,
+            "next_id": None
+        }
+    )
 
     return render_template(
         "classify.html",
         media=media,
-        destination_folders=get_destination_folders()
+        destination_folders=get_destination_folders(),
+        previous_media_id=navigation["previous_id"],
+        next_media_id=navigation["next_id"],
+        media_position=navigation["position"],
+        pending_total=navigation["total"]
     )
 
 
 @app.route("/media/<int:media_id>")
 def serve_media(media_id):
 
-    media = get_next_pending_media()
+    media = get_pending_media_by_id(media_id)
 
-    if media is None or media["id"] != media_id:
+    if media is None:
         abort(404)
 
     path = Path(media["current_path"])
@@ -115,16 +135,16 @@ def serve_media(media_id):
 @app.route("/move/<int:media_id>", methods=["POST"])
 def move(media_id):
 
-    media = get_next_pending_media()
+    media = get_pending_media_by_id(media_id)
 
-    if media is None or media["id"] != media_id:
+    if media is None:
         abort(404)
 
     folder_name = request.form.get("folder_name", "").strip()
 
     if not folder_name:
         flash("Choisis un dossier de destination.", "error")
-        return redirect(url_for("classify"))
+        return redirect(url_for("classify", media_id=media_id))
 
     try:
         destination_folder = create_destination_folder(folder_name)
@@ -144,8 +164,17 @@ def move(media_id):
             "success"
         )
 
+        # Après le classement, on affiche le média suivant dans l'ordre.
+        next_media = get_next_pending_media(after_id=media_id)
+
+        if next_media is not None:
+            return redirect(
+                url_for("classify", media_id=next_media["id"])
+            )
+
     except Exception as error:
         flash(f"Impossible de déplacer le média : {error}", "error")
+        return redirect(url_for("classify", media_id=media_id))
 
     return redirect(url_for("classify"))
 
@@ -154,6 +183,11 @@ def move(media_id):
 def create_destination():
 
     folder_name = request.form.get("folder_name", "")
+
+    current_media_id = request.form.get(
+        "current_media_id",
+        type=int
+    )
 
     try:
         folder = create_destination_folder(folder_name)
@@ -165,6 +199,11 @@ def create_destination():
 
     except Exception as error:
         flash(f"Impossible de créer le dossier : {error}", "error")
+
+    if current_media_id is not None:
+        return redirect(
+            url_for("classify", media_id=current_media_id)
+        )
 
     return redirect(url_for("classify"))
 

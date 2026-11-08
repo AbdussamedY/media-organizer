@@ -128,8 +128,24 @@ def get_latest_scan_report():
     return report
 
 
-def get_next_pending_media():
+def get_next_pending_media(after_id=None):
+    """
+    Retourne le premier média en attente, ou le média en attente
+    suivant after_id. Revient au premier média si la fin est atteinte.
+    """
     with get_connection() as connection:
+        if after_id is not None:
+            media = connection.execute("""
+                SELECT *
+                FROM media
+                WHERE status = 'pending' AND id > ?
+                ORDER BY id
+                LIMIT 1
+            """, (after_id,)).fetchone()
+
+            if media is not None:
+                return media
+
         media = connection.execute("""
             SELECT *
             FROM media
@@ -139,6 +155,60 @@ def get_next_pending_media():
         """).fetchone()
 
     return media
+
+
+def get_pending_media_by_id(media_id):
+    """Retourne un média uniquement s'il est encore en attente."""
+    with get_connection() as connection:
+        media = connection.execute("""
+            SELECT *
+            FROM media
+            WHERE id = ? AND status = 'pending'
+        """, (media_id,)).fetchone()
+
+    return media
+
+
+def get_pending_media_navigation(media_id):
+    """
+    Retourne la position du média dans la file d'attente
+    et les identifiants des médias précédent et suivant.
+    """
+    with get_connection() as connection:
+        total = connection.execute("""
+            SELECT COUNT(*)
+            FROM media
+            WHERE status = 'pending'
+        """).fetchone()[0]
+
+        position = connection.execute("""
+            SELECT COUNT(*)
+            FROM media
+            WHERE status = 'pending' AND id <= ?
+        """, (media_id,)).fetchone()[0]
+
+        previous_media = connection.execute("""
+            SELECT id
+            FROM media
+            WHERE status = 'pending' AND id < ?
+            ORDER BY id DESC
+            LIMIT 1
+        """, (media_id,)).fetchone()
+
+        next_media = connection.execute("""
+            SELECT id
+            FROM media
+            WHERE status = 'pending' AND id > ?
+            ORDER BY id
+            LIMIT 1
+        """, (media_id,)).fetchone()
+
+    return {
+        "position": position,
+        "total": total,
+        "previous_id": previous_media["id"] if previous_media else None,
+        "next_id": next_media["id"] if next_media else None
+    }
 
 
 def mark_media_moved(media_id, new_path):

@@ -9,6 +9,45 @@
 
 {% if media %}
 
+<div class="media-navigation" aria-label="Navigation entre les médias">
+
+    {% if previous_media_id is not none %}
+        <a
+            id="previous-media"
+            class="navigation-button"
+            href="{{ url_for('classify', media_id=previous_media_id) }}"
+            aria-label="Média précédent"
+        >
+            ← Précédent
+        </a>
+    {% else %}
+        <span class="navigation-button disabled" aria-disabled="true">
+            ← Précédent
+        </span>
+    {% endif %}
+
+    <span class="media-counter">
+        {{ media_position }} / {{ pending_total }}
+    </span>
+
+    {% if next_media_id is not none %}
+        <a
+            id="next-media"
+            class="navigation-button"
+            href="{{ url_for('classify', media_id=next_media_id) }}"
+            aria-label="Média suivant"
+        >
+            Suivant →
+        </a>
+    {% else %}
+        <span class="navigation-button disabled" aria-disabled="true">
+            Suivant →
+        </span>
+    {% endif %}
+
+</div>
+
+
 <section class="classify-layout">
 
     <div class="media-section">
@@ -109,6 +148,12 @@
             >
 
                 <input
+                    type="hidden"
+                    name="current_media_id"
+                    value="{{ media.id }}"
+                >
+
+                <input
                     type="text"
                     name="folder_name"
                     placeholder="Nom du dossier"
@@ -126,6 +171,50 @@
     </div>
 
 </section>
+
+
+<script>
+document.addEventListener("keydown", function (event) {
+    // Ne détourne pas les flèches lorsqu'on utilise un champ,
+    // un bouton ou les contrôles d'une vidéo.
+    if (
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.shiftKey
+    ) {
+        return;
+    }
+
+    const target = event.target;
+
+    if (
+        target.closest(
+            "input, textarea, select, button, video, audio, [contenteditable='true']"
+        )
+    ) {
+        return;
+    }
+
+    if (event.key === "ArrowLeft") {
+        const previousLink = document.getElementById("previous-media");
+
+        if (previousLink) {
+            event.preventDefault();
+            window.location.href = previousLink.href;
+        }
+    }
+
+    if (event.key === "ArrowRight") {
+        const nextLink = document.getElementById("next-media");
+
+        if (nextLink) {
+            event.preventDefault();
+            window.location.href = nextLink.href;
+        }
+    }
+});
+</script>
 
 
 {% else %}
