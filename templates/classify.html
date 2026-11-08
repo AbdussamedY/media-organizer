@@ -1,50 +1,52 @@
 {% extends "base.html" %}
 
 {% block title %}Classement — Media Organizer{% endblock %}
+{% block main_class %}classify-main{% endblock %}
 
 {% block content %}
 
-<h2>Classement des médias</h2>
-
-
 {% if media %}
 
-<div class="media-navigation" aria-label="Navigation entre les médias">
+<div class="classify-header">
+    <h2>Classement des médias</h2>
 
-    {% if previous_media_id is not none %}
-        <a
-            id="previous-media"
-            class="navigation-button"
-            href="{{ url_for('classify', media_id=previous_media_id) }}"
-            aria-label="Média précédent"
-        >
-            ← Précédent
-        </a>
-    {% else %}
-        <span class="navigation-button disabled" aria-disabled="true">
-            ← Précédent
+    <div class="media-navigation" aria-label="Navigation entre les médias">
+
+        {% if previous_media_id is not none %}
+            <a
+                id="previous-media"
+                class="navigation-button"
+                href="{{ url_for('classify', media_id=previous_media_id) }}"
+                aria-label="Média précédent"
+            >
+                ← Précédent
+            </a>
+        {% else %}
+            <span class="navigation-button disabled" aria-disabled="true">
+                ← Précédent
+            </span>
+        {% endif %}
+
+        <span class="media-counter">
+            {{ media_position }} / {{ pending_total }}
         </span>
-    {% endif %}
 
-    <span class="media-counter">
-        {{ media_position }} / {{ pending_total }}
-    </span>
+        {% if next_media_id is not none %}
+            <a
+                id="next-media"
+                class="navigation-button"
+                href="{{ url_for('classify', media_id=next_media_id) }}"
+                aria-label="Média suivant"
+            >
+                Suivant →
+            </a>
+        {% else %}
+            <span class="navigation-button disabled" aria-disabled="true">
+                Suivant →
+            </span>
+        {% endif %}
 
-    {% if next_media_id is not none %}
-        <a
-            id="next-media"
-            class="navigation-button"
-            href="{{ url_for('classify', media_id=next_media_id) }}"
-            aria-label="Média suivant"
-        >
-            Suivant →
-        </a>
-    {% else %}
-        <span class="navigation-button disabled" aria-disabled="true">
-            Suivant →
-        </span>
-    {% endif %}
-
+    </div>
 </div>
 
 
@@ -52,43 +54,43 @@
 
     <div class="media-section">
 
-        {% if media.media_type == "image" %}
+        <div class="media-preview-container">
 
-            <img
-                class="media-preview"
-                src="{{ url_for('serve_media', media_id=media.id) }}"
-                alt="{{ media.filename }}"
-            >
+            {% if media.media_type == "image" %}
 
-        {% elif media.media_type == "video" %}
-
-            <video
-                class="media-preview"
-                controls
-                preload="metadata"
-            >
-                <source
+                <img
+                    class="media-preview"
                     src="{{ url_for('serve_media', media_id=media.id) }}"
+                    alt="{{ media.filename }}"
                 >
 
-                Ton navigateur ne prend pas en charge cette vidéo.
-            </video>
+            {% elif media.media_type == "video" %}
 
-        {% endif %}
+                <video
+                    class="media-preview"
+                    controls
+                    preload="metadata"
+                >
+                    <source
+                        src="{{ url_for('serve_media', media_id=media.id) }}"
+                    >
+
+                    Ton navigateur ne prend pas en charge cette vidéo.
+                </video>
+
+            {% endif %}
+
+        </div>
 
 
         <div class="media-information">
 
             <h3>{{ media.filename }}</h3>
 
-            <p>
-                Type :
+            <span>
                 {{ "Image" if media.media_type == "image" else "Vidéo" }}
-            </p>
-
-            <p>
-                Format : {{ media.detected_format }}
-            </p>
+                · {{ media.detected_format }}
+            </span>
 
         </div>
 
@@ -175,8 +177,6 @@
 
 <script>
 document.addEventListener("keydown", function (event) {
-    // Ne détourne pas les flèches lorsqu'on utilise un champ,
-    // un bouton ou les contrôles d'une vidéo.
     if (
         event.altKey ||
         event.ctrlKey ||

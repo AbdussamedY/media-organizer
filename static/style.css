@@ -2,6 +2,11 @@
     box-sizing: border-box;
 }
 
+html,
+body {
+    height: 100%;
+}
+
 body {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -121,18 +126,56 @@ input {
     background: #3a9d69;
 }
 
+/* Page de classement : tout tient dans la fenêtre. */
+.classify-main {
+    height: calc(100vh - 62px);
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 14px 20px 18px;
+
+    display: flex;
+    flex-direction: column;
+
+    overflow: hidden;
+}
+
+.classify-main .messages {
+    flex: 0 0 auto;
+    margin-bottom: 10px;
+}
+
+.classify-main .message {
+    margin-bottom: 6px;
+    padding: 8px 12px;
+}
+
+.classify-header {
+    flex: 0 0 auto;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+
+    margin-bottom: 12px;
+}
+
+.classify-header h2 {
+    margin: 0;
+    font-size: 20px;
+}
+
 .media-navigation {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 24px;
-    margin: 0 0 20px;
+    gap: 14px;
 }
 
 .navigation-button {
     display: inline-block;
-    min-width: 125px;
-    padding: 10px 16px;
+    min-width: 105px;
+    padding: 8px 12px;
     border: 1px solid #ccc;
     border-radius: 6px;
     background: white;
@@ -161,41 +204,88 @@ input {
 }
 
 .classify-layout {
+    flex: 1 1 auto;
+    min-height: 0;
+
     display: grid;
-    grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
-    gap: 25px;
-    align-items: start;
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
+    gap: 18px;
 }
 
 .media-section,
 .destination-section {
+    min-height: 0;
     background: white;
     border-radius: 10px;
-    padding: 20px;
+    padding: 14px;
+}
+
+.media-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.media-preview-container {
+    flex: 1 1 auto;
+    min-height: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #111;
+    border-radius: 6px;
+    overflow: hidden;
 }
 
 .media-preview {
     display: block;
     width: 100%;
-    max-height: 75vh;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
     object-fit: contain;
     background: #111;
-    border-radius: 6px;
 }
 
 .media-information {
-    margin-top: 15px;
+    flex: 0 0 auto;
+    margin-top: 10px;
+    min-height: 0;
     overflow-wrap: anywhere;
 }
 
 .media-information h3 {
-    margin-bottom: 8px;
+    margin: 0 0 4px;
+    font-size: 14px;
+    line-height: 1.25;
+}
+
+.media-information span {
+    color: #777;
+    font-size: 13px;
+}
+
+.destination-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.destination-section > h3 {
+    flex: 0 0 auto;
+    margin-bottom: 10px;
 }
 
 .destination-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 7px;
+
+    padding-right: 3px;
 }
 
 .destination-list form {
@@ -204,19 +294,35 @@ input {
 
 .destination-button {
     width: 100%;
+    padding: 9px 12px;
     text-align: left;
 }
 
 .create-folder {
-    margin-top: 30px;
-    padding-top: 20px;
+    flex: 0 0 auto;
+    margin-top: 12px;
+    padding-top: 12px;
     border-top: 1px solid #eee;
+}
+
+.create-folder h3 {
+    margin-bottom: 8px;
 }
 
 .create-folder form {
     display: flex;
-    flex-direction: column;
-    gap: 10px;
+    gap: 8px;
+}
+
+.create-folder input {
+    min-width: 0;
+    flex: 1 1 auto;
+    padding: 9px;
+}
+
+.create-folder button {
+    flex: 0 0 auto;
+    padding: 9px 12px;
 }
 
 .messages {
@@ -250,8 +356,31 @@ input {
         gap: 15px;
     }
 
+    .classify-main {
+        height: auto;
+        min-height: calc(100vh - 120px);
+        overflow: visible;
+    }
+
+    .classify-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
     .classify-layout {
         grid-template-columns: 1fr;
+    }
+
+    .media-section {
+        min-height: 60vh;
+    }
+
+    .destination-section {
+        min-height: auto;
+    }
+
+    .destination-list {
+        max-height: 45vh;
     }
 
     .media-navigation {
