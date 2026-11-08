@@ -7,288 +7,198 @@
 <h2>Tableau de bord</h2>
 
 <section class="stats-grid">
-
-    <div class="stat-card">
-        <span class="stat-label">Total des médias</span>
-        <strong>{{ statistics.total }}</strong>
-    </div>
-
-    <div class="stat-card">
-        <span class="stat-label">Images</span>
-        <strong>{{ statistics.images }}</strong>
-    </div>
-
-    <div class="stat-card">
-        <span class="stat-label">Vidéos</span>
-        <strong>{{ statistics.videos }}</strong>
-    </div>
-
-    <div class="stat-card">
-        <span class="stat-label">À classer</span>
-        <strong>{{ statistics.pending }}</strong>
-    </div>
-
-    <div class="stat-card">
-        <span class="stat-label">Déjà classés</span>
-        <strong>{{ statistics.moved }}</strong>
-    </div>
-
+    <div class="stat-card"><span class="stat-label">Total des médias</span><strong>{{ statistics.total }}</strong></div>
+    <div class="stat-card"><span class="stat-label">Images</span><strong>{{ statistics.images }}</strong></div>
+    <div class="stat-card"><span class="stat-label">Vidéos</span><strong>{{ statistics.videos }}</strong></div>
+    <div class="stat-card"><span class="stat-label">À classer</span><strong>{{ statistics.pending }}</strong></div>
+    <div class="stat-card"><span class="stat-label">Déjà classés</span><strong>{{ statistics.moved }}</strong></div>
 </section>
 
-
 <section class="panel">
-
     <h3>Progression du classement</h3>
-
     {% if statistics.total > 0 %}
-
         {% set progress = statistics.moved / statistics.total * 100 %}
-
-        <div class="progress-bar">
-            <div
-                class="progress-fill"
-                style="width: {{ progress }}%"
-            ></div>
-        </div>
-
-        <p>
-            {{ statistics.moved }} / {{ statistics.total }} médias classés
-            ({{ "%.1f"|format(progress) }} %)
-        </p>
-
+        <div class="progress-bar"><div class="progress-fill" style="width: {{ progress }}%"></div></div>
+        <p>{{ statistics.moved }} / {{ statistics.total }} médias classés ({{ "%.1f"|format(progress) }} %)</p>
     {% else %}
-
         <p>Aucun média dans la base de données.</p>
-
     {% endif %}
-
     <p>
-        Images restantes : {{ statistics.pending_images }}
-        <br>
+        Images restantes : {{ statistics.pending_images }}<br>
         Vidéos restantes : {{ statistics.pending_videos }}
     </p>
-
 </section>
-
 
 <section class="panel">
-
     <h3>Scanner les médias</h3>
+    <p>Parcourt le dossier source pour identifier les images et les vidéos. Les médias déjà enregistrés ne sont pas ajoutés une deuxième fois.</p>
 
-    <p>
-        Parcourt le dossier source pour identifier les images et les vidéos.
-        Les médias déjà enregistrés ne sont pas ajoutés une deuxième fois.
-    </p>
+    <button id="scan-button" type="button">Lancer le scan</button>
 
-    <form action="{{ url_for('scan') }}" method="POST">
-        <button type="submit">Lancer le scan</button>
-    </form>
-
+    <div id="scan-progress" class="scan-progress hidden">
+        <div class="scan-progress-header">
+            <strong id="scan-status-text">Préparation du scan…</strong>
+            <span id="scan-percentage">0 %</span>
+        </div>
+        <div class="progress-bar"><div id="scan-progress-fill" class="progress-fill"></div></div>
+        <p id="scan-details">Recherche des fichiers…</p>
+        <p id="scan-current-file" class="scan-current-file"></p>
+        <div class="scan-counts">
+            <span>Images : <strong id="scan-images">0</strong></span>
+            <span>Vidéos : <strong id="scan-videos">0</strong></span>
+            <span>Ignorés : <strong id="scan-ignored">0</strong></span>
+        </div>
+    </div>
 </section>
-
 
 {% if scan_report %}
-
 <section class="panel">
-
     <h3>Dernier scan</h3>
-
+    <p>Date : {{ scan_report.scan_time }}</p>
     <p>
-        Date :
-        {{ scan_report.scan_time }}
-    </p>
-
-    <p>
-        Fichiers parcourus : {{ scan_report.total_files }}
-        <br>
-        Images détectées : {{ scan_report.image_files }}
-        <br>
-        Vidéos détectées : {{ scan_report.video_files }}
-        <br>
+        Fichiers parcourus : {{ scan_report.total_files }}<br>
+        Images détectées : {{ scan_report.image_files }}<br>
+        Vidéos détectées : {{ scan_report.video_files }}<br>
         Fichiers ignorés : {{ scan_report.ignored_files }}
     </p>
-
     <h4>Formats détectés</h4>
-
     {% if scan_report.detected_formats %}
-
-        <ul>
-            {% for format_name, count in scan_report.detected_formats.items() %}
-                <li>{{ format_name }} : {{ count }}</li>
-            {% endfor %}
-        </ul>
-
-    {% else %}
-
-        <p>Aucun format reconnu.</p>
-
-    {% endif %}
-
-
+        <ul>{% for format_name, count in scan_report.detected_formats.items() %}<li>{{ format_name }} : {{ count }}</li>{% endfor %}</ul>
+    {% else %}<p>Aucun format reconnu.</p>{% endif %}
     <h4>Extensions ignorées</h4>
-
     {% if scan_report.ignored_extensions %}
-
-        <ul>
-            {% for extension, count in scan_report.ignored_extensions.items() %}
-                <li>{{ extension }} : {{ count }}</li>
-            {% endfor %}
-        </ul>
-
-    {% else %}
-
-        <p>Aucun fichier ignoré.</p>
-
-    {% endif %}
-
+        <ul>{% for extension, count in scan_report.ignored_extensions.items() %}<li>{{ extension }} : {{ count }}</li>{% endfor %}</ul>
+    {% else %}<p>Aucun fichier ignoré.</p>{% endif %}
 </section>
-
 {% endif %}
 
-
 <section class="panel">
-
     <h3>Dossiers de destination</h3>
-
     {% if destination_folders %}
-
-        <ul>
-            {% for folder in destination_folders %}
-                <li>{{ folder.name }}</li>
-            {% endfor %}
-        </ul>
-
-    {% else %}
-
-        <p>Aucun dossier de destination pour le moment.</p>
-
-    {% endif %}
-
+        <ul>{% for folder in destination_folders %}<li>{{ folder.name }}</li>{% endfor %}</ul>
+    {% else %}<p>Aucun dossier de destination pour le moment.</p>{% endif %}
 </section>
 
-
 <section class="panel">
-
-    <a class="button-link" href="{{ url_for('classify') }}">
-        Commencer le classement
-    </a>
-
+    <a class="button-link" href="{{ url_for('classify') }}">Commencer le classement</a>
 </section>
 
 <script>
-const scanButton = document.getElementById("scan-button");
-const scanProgress = document.getElementById("scan-progress");
-const statusText = document.getElementById("scan-status-text");
-const percentage = document.getElementById("scan-percentage");
-const progressFill = document.getElementById("scan-progress-fill");
-const details = document.getElementById("scan-details");
-const currentFile = document.getElementById("scan-current-file");
-const images = document.getElementById("scan-images");
-const videos = document.getElementById("scan-videos");
-const ignored = document.getElementById("scan-ignored");
+(() => {
+    const scanButton = document.getElementById("scan-button");
+    const scanProgress = document.getElementById("scan-progress");
+    const statusText = document.getElementById("scan-status-text");
+    const percentage = document.getElementById("scan-percentage");
+    const progressFill = document.getElementById("scan-progress-fill");
+    const details = document.getElementById("scan-details");
+    const currentFile = document.getElementById("scan-current-file");
+    const images = document.getElementById("scan-images");
+    const videos = document.getElementById("scan-videos");
+    const ignored = document.getElementById("scan-ignored");
 
-let polling = null;
+    let polling = null;
 
-function updateProgress(status) {
-    scanProgress.classList.remove("hidden");
+    function updateProgress(status) {
+        scanProgress.classList.remove("hidden");
 
-    const total = status.total || 0;
-    const current = status.current || 0;
-    const value = total > 0 ? current / total * 100 : 0;
+        const total = status.total || 0;
+        const current = status.current || 0;
+        const value = total > 0 ? current / total * 100 : 0;
 
-    progressFill.style.width = value + "%";
-    percentage.textContent = total > 0 ? Math.round(value) + " %" : "…";
+        progressFill.style.width = value + "%";
+        percentage.textContent = total > 0 ? Math.round(value) + " %" : "…";
+        images.textContent = status.image_files || 0;
+        videos.textContent = status.video_files || 0;
+        ignored.textContent = status.ignored_files || 0;
 
-    images.textContent = status.image_files || 0;
-    videos.textContent = status.video_files || 0;
-    ignored.textContent = status.ignored_files || 0;
-
-    if (status.phase === "starting") {
-        statusText.textContent = "Préparation du scan…";
-        details.textContent = "Recherche et comptage des fichiers…";
-        currentFile.textContent = "";
-    } else if (status.phase === "running") {
-        statusText.textContent = "Scan en cours";
-        details.textContent = current + " / " + total + " fichiers analysés";
-        currentFile.textContent = status.current_file || "";
-    } else if (status.phase === "completed") {
-        statusText.textContent = "Scan terminé";
-        details.textContent = current + " fichiers analysés";
-        currentFile.textContent = "Mise à jour du tableau de bord…";
-    } else if (status.phase === "error") {
-        statusText.textContent = "Erreur pendant le scan";
-        details.textContent = status.error || "Erreur inconnue.";
-        currentFile.textContent = "";
-    }
-}
-
-async function pollScanStatus() {
-    const response = await fetch("{{ url_for('scan_status_endpoint') }}");
-    const status = await response.json();
-    updateProgress(status);
-
-    if (status.phase === "completed") {
-        clearInterval(polling);
-        polling = null;
-        scanButton.disabled = false;
-        scanButton.textContent = "Lancer un nouveau scan";
-        setTimeout(() => window.location.reload(), 800);
-    } else if (status.phase === "error") {
-        clearInterval(polling);
-        polling = null;
-        scanButton.disabled = false;
-        scanButton.textContent = "Réessayer";
-    }
-}
-
-async function startScan() {
-    scanButton.disabled = true;
-    scanButton.textContent = "Scan en cours…";
-
-    try {
-        const response = await fetch("{{ url_for('scan') }}", {
-            method: "POST"
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-            throw new Error(result.message || "Impossible de démarrer le scan.");
+        if (status.phase === "starting") {
+            statusText.textContent = "Préparation du scan…";
+            details.textContent = "Recherche et comptage des fichiers…";
+            currentFile.textContent = "";
+        } else if (status.phase === "running") {
+            statusText.textContent = "Scan en cours";
+            details.textContent = current + " / " + total + " fichiers analysés";
+            currentFile.textContent = status.current_file || "";
+        } else if (status.phase === "completed") {
+            statusText.textContent = "Scan terminé";
+            details.textContent = current + " fichiers analysés";
+            currentFile.textContent = "";
+        } else if (status.phase === "error") {
+            statusText.textContent = "Erreur pendant le scan";
+            details.textContent = status.error || "Erreur inconnue.";
+            currentFile.textContent = "";
         }
-
-        scanProgress.classList.remove("hidden");
-        await pollScanStatus();
-        polling = setInterval(() => {
-            pollScanStatus().catch(console.error);
-        }, 500);
-
-    } catch (error) {
-        scanButton.disabled = false;
-        scanButton.textContent = "Lancer le scan";
-        scanProgress.classList.remove("hidden");
-        statusText.textContent = "Impossible de démarrer le scan";
-        details.textContent = error.message;
     }
-}
 
-scanButton.addEventListener("click", startScan);
-
-(async () => {
-    try {
+    async function pollScanStatus() {
         const response = await fetch("{{ url_for('scan_status_endpoint') }}");
+        if (!response.ok) throw new Error("Impossible de lire l'avancement du scan.");
         const status = await response.json();
+        updateProgress(status);
 
-        if (status.phase === "running" || status.phase === "starting") {
-            scanButton.disabled = true;
-            scanButton.textContent = "Scan en cours…";
-            updateProgress(status);
-            polling = setInterval(() => {
-                pollScanStatus().catch(console.error);
-            }, 500);
+        if (status.phase === "completed" || status.phase === "error") {
+            if (polling !== null) clearInterval(polling);
+            polling = null;
+            scanButton.disabled = false;
+            scanButton.textContent = status.phase === "completed"
+                ? "Lancer un nouveau scan"
+                : "Réessayer";
+
+            if (status.phase === "completed") {
+                setTimeout(() => window.location.reload(), 1000);
+            }
         }
-    } catch (error) {
-        // Rien à faire en cas d'erreur temporaire.
     }
+
+    async function startScan() {
+        scanButton.disabled = true;
+        scanButton.textContent = "Scan en cours…";
+        scanProgress.classList.remove("hidden");
+        statusText.textContent = "Démarrage du scan…";
+
+        try {
+            const response = await fetch("{{ url_for('scan') }}", { method: "POST" });
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.message || "Impossible de démarrer le scan.");
+            }
+
+            await pollScanStatus();
+            if (polling === null) {
+                polling = setInterval(() => {
+                    pollScanStatus().catch(showPollingError);
+                }, 500);
+            }
+        } catch (error) {
+            scanButton.disabled = false;
+            scanButton.textContent = "Réessayer";
+            statusText.textContent = "Impossible de démarrer le scan";
+            details.textContent = error.message;
+        }
+    }
+
+    function showPollingError(error) {
+        console.error(error);
+        details.textContent = "Perte temporaire de connexion avec le serveur. Nouvelle tentative…";
+    }
+
+    scanButton.addEventListener("click", startScan);
+
+    // Reprendre l'affichage si la page est rechargée pendant un scan.
+    fetch("{{ url_for('scan-status-endpoint') }}")
+        .then(response => response.json())
+        .then(status => {
+            if (status.phase === "running" || status.phase === "starting") {
+                scanButton.disabled = true;
+                scanButton.textContent = "Scan en cours…";
+                updateProgress(status);
+                polling = setInterval(() => {
+                    pollScanStatus().catch(showPollingError);
+                }, 500);
+            }
+        })
+        .catch(() => {});
 })();
 </script>
 
