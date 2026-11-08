@@ -392,3 +392,49 @@ input {
         padding: 10px 12px;
     }
 }
+
+
+/* Avancement du scan */
+.scan-progress {
+    margin-top: 18px;
+    padding: 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fafafa;
+}
+
+.scan-progress.hidden {
+    display: none;
+}
+
+.scan-progress-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 10px;
+}
+
+.scan-progress .progress-fill {
+    width: 0;
+    transition: width 0.2s ease;
+}
+
+#scan-details {
+    margin: 10px 0 4px;
+}
+
+.scan-current-file {
+    margin: 0;
+    color: #777;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+}
+
+.scan-counts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 12px;
+    color: #555;
+    font-size: 14px;
+}

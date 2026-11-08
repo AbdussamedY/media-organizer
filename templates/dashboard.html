@@ -175,4 +175,121 @@
 
 </section>
 
+<script>
+const scanButton = document.getElementById("scan-button");
+const scanProgress = document.getElementById("scan-progress");
+const statusText = document.getElementById("scan-status-text");
+const percentage = document.getElementById("scan-percentage");
+const progressFill = document.getElementById("scan-progress-fill");
+const details = document.getElementById("scan-details");
+const currentFile = document.getElementById("scan-current-file");
+const images = document.getElementById("scan-images");
+const videos = document.getElementById("scan-videos");
+const ignored = document.getElementById("scan-ignored");
+
+let polling = null;
+
+function updateProgress(status) {
+    scanProgress.classList.remove("hidden");
+
+    const total = status.total || 0;
+    const current = status.current || 0;
+    const value = total > 0 ? current / total * 100 : 0;
+
+    progressFill.style.width = value + "%";
+    percentage.textContent = total > 0 ? Math.round(value) + " %" : "…";
+
+    images.textContent = status.image_files || 0;
+    videos.textContent = status.video_files || 0;
+    ignored.textContent = status.ignored_files || 0;
+
+    if (status.phase === "starting") {
+        statusText.textContent = "Préparation du scan…";
+        details.textContent = "Recherche et comptage des fichiers…";
+        currentFile.textContent = "";
+    } else if (status.phase === "running") {
+        statusText.textContent = "Scan en cours";
+        details.textContent = current + " / " + total + " fichiers analysés";
+        currentFile.textContent = status.current_file || "";
+    } else if (status.phase === "completed") {
+        statusText.textContent = "Scan terminé";
+        details.textContent = current + " fichiers analysés";
+        currentFile.textContent = "Mise à jour du tableau de bord…";
+    } else if (status.phase === "error") {
+        statusText.textContent = "Erreur pendant le scan";
+        details.textContent = status.error || "Erreur inconnue.";
+        currentFile.textContent = "";
+    }
+}
+
+async function pollScanStatus() {
+    const response = await fetch("{{ url_for('scan_status_endpoint') }}");
+    const status = await response.json();
+    updateProgress(status);
+
+    if (status.phase === "completed") {
+        clearInterval(polling);
+        polling = null;
+        scanButton.disabled = false;
+        scanButton.textContent = "Lancer un nouveau scan";
+        setTimeout(() => window.location.reload(), 800);
+    } else if (status.phase === "error") {
+        clearInterval(polling);
+        polling = null;
+        scanButton.disabled = false;
+        scanButton.textContent = "Réessayer";
+    }
+}
+
+async function startScan() {
+    scanButton.disabled = true;
+    scanButton.textContent = "Scan en cours…";
+
+    try {
+        const response = await fetch("{{ url_for('scan') }}", {
+            method: "POST"
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || "Impossible de démarrer le scan.");
+        }
+
+        scanProgress.classList.remove("hidden");
+        await pollScanStatus();
+        polling = setInterval(() => {
+            pollScanStatus().catch(console.error);
+        }, 500);
+
+    } catch (error) {
+        scanButton.disabled = false;
+        scanButton.textContent = "Lancer le scan";
+        scanProgress.classList.remove("hidden");
+        statusText.textContent = "Impossible de démarrer le scan";
+        details.textContent = error.message;
+    }
+}
+
+scanButton.addEventListener("click", startScan);
+
+(async () => {
+    try {
+        const response = await fetch("{{ url_for('scan_status_endpoint') }}");
+        const status = await response.json();
+
+        if (status.phase === "running" || status.phase === "starting") {
+            scanButton.disabled = true;
+            scanButton.textContent = "Scan en cours…";
+            updateProgress(status);
+            polling = setInterval(() => {
+                pollScanStatus().catch(console.error);
+            }, 500);
+        }
+    } catch (error) {
+        // Rien à faire en cas d'erreur temporaire.
+    }
+})();
+</script>
+
 {% endblock %}

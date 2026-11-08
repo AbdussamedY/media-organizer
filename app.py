@@ -1,9 +1,11 @@
 from pathlib import Path
+from threading import Lock, Thread
 
 from flask import (
     Flask,
     abort,
     flash,
+    jsonify,
     redirect,
     render_template,
     request,
@@ -44,6 +46,50 @@ app.secret_key = "change-this-local-secret-key"
 ensure_directories()
 initialize_database()
 
+scan_lock = Lock()
+scan_status = {
+    "phase": "idle",
+    "current": 0,
+    "total": 0,
+    "current_file": None,
+    "image_files": 0,
+    "video_files": 0,
+    "ignored_files": 0,
+    "error": None,
+}
+
+
+def update_scan_status(progress):
+    with scan_lock:
+        scan_status.update(progress)
+
+
+def run_scan():
+    try:
+        report = scan_directory(
+            SOURCE_ROOT,
+            progress_callback=update_scan_status
+        )
+
+        with scan_lock:
+            scan_status.update({
+                "phase": "completed",
+                "current": report["total_files"],
+                "total": report["total_files"],
+                "current_file": None,
+                "image_files": report["image_files"],
+                "video_files": report["video_files"],
+                "ignored_files": report["ignored_files"],
+                "error": None,
+            })
+
+    except Exception as error:
+        with scan_lock:
+            scan_status.update({
+                "phase": "error",
+                "error": str(error),
+            })
+
 
 @app.route("/")
 def dashboard():
@@ -63,20 +109,38 @@ def dashboard():
 @app.route("/scan", methods=["POST"])
 def scan():
 
-    try:
-        report = scan_directory(SOURCE_ROOT)
+    with scan_lock:
+        if scan_status["phase"] == "running":
+            return jsonify({
+                "started": False,
+                "message": "Un scan est déjà en cours."
+            }), 409
 
-        flash(
-            f"Scan terminé : {report['image_files']} images, "
-            f"{report['video_files']} vidéos et "
-            f"{report['ignored_files']} fichiers ignorés.",
-            "success"
-        )
+        scan_status.update({
+            "phase": "starting",
+            "current": 0,
+            "total": 0,
+            "current_file": None,
+            "image_files": 0,
+            "video_files": 0,
+            "ignored_files": 0,
+            "error": None,
+        })
 
-    except Exception as error:
-        flash(f"Erreur pendant le scan : {error}", "error")
+    Thread(target=run_scan, daemon=True).start()
 
-    return redirect(url_for("dashboard"))
+    return jsonify({
+        "started": True,
+        "message": "Scan démarré."
+    })
+
+
+@app.route("/scan-status")
+def scan_status_endpoint():
+
+    with scan_lock:
+        return jsonify(dict(scan_status))
+
 
 
 @app.route("/classify")
@@ -212,5 +276,6 @@ if __name__ == "__main__":
     app.run(
         host="127.0.0.1",
         port=5000,
-        debug=True
+        debug=True,
+        use_reloader=False
     )

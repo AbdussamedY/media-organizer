@@ -136,13 +136,20 @@ def detect_media(path):
     return None, None
 
 
-def scan_directory(root):
+def scan_directory(root, progress_callback=None):
     """
     Parcourt récursivement le dossier source
     et enregistre les images et vidéos reconnues.
     """
 
     root = Path(root).resolve()
+
+    paths = [
+        path for path in root.rglob("*")
+        if path.is_file()
+    ]
+
+    total_to_process = len(paths)
 
     detected_formats = Counter()
     ignored_extensions = Counter()
@@ -152,10 +159,18 @@ def scan_directory(root):
     video_files = 0
     ignored_files = 0
 
-    for path in root.rglob("*"):
+    if progress_callback is not None:
+        progress_callback({
+            "phase": "running",
+            "current": 0,
+            "total": total_to_process,
+            "current_file": None,
+            "image_files": 0,
+            "video_files": 0,
+            "ignored_files": 0,
+        })
 
-        if not path.is_file():
-            continue
+    for index, path in enumerate(paths, start=1):
 
         total_files += 1
 
@@ -184,6 +199,17 @@ def scan_directory(root):
 
         elif media_type == "video":
             video_files += 1
+
+        if progress_callback is not None:
+            progress_callback({
+                "phase": "running",
+                "current": index,
+                "total": total_to_process,
+                "current_file": path.name,
+                "image_files": image_files,
+                "video_files": video_files,
+                "ignored_files": ignored_files,
+            })
 
     save_scan_report(
         total_files=total_files,
