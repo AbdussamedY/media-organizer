@@ -186,7 +186,7 @@
     scanButton.addEventListener("click", startScan);
 
     // Reprendre l'affichage si la page est rechargée pendant un scan.
-    fetch("{{ url_for('scan-status-endpoint') }}")
+    fetch("{{ url_for('scan_status_endpoint') }}")
         .then(response => response.json())
         .then(status => {
             if (status.phase === "running" || status.phase === "starting") {
