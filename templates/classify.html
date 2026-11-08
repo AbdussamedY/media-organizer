@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Classement — Media Organizer{% endblock %}
+
+{% block content %}
+
+<h2>Classement des médias</h2>
+
+
+{% if media %}
+
+<section class="classify-layout">
+
+    <div class="media-section">
+
+        {% if media.media_type == "image" %}
+
+            <img
+                class="media-preview"
+                src="{{ url_for('serve_media', media_id=media.id) }}"
+                alt="{{ media.filename }}"
+            >
+
+        {% elif media.media_type == "video" %}
+
+            <video
+                class="media-preview"
+                controls
+                preload="metadata"
+            >
+                <source
+                    src="{{ url_for('serve_media', media_id=media.id) }}"
+                >
+
+                Ton navigateur ne prend pas en charge cette vidéo.
+            </video>
+
+        {% endif %}
+
+
+        <div class="media-information">
+
+            <h3>{{ media.filename }}</h3>
+
+            <p>
+                Type :
+                {{ "Image" if media.media_type == "image" else "Vidéo" }}
+            </p>
+
+            <p>
+                Format : {{ media.detected_format }}
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="destination-section">
+
+        <h3>Choisir une destination</h3>
+
+        {% if destination_folders %}
+
+            <div class="destination-list">
+
+                {% for folder in destination_folders %}
+
+                    <form
+                        action="{{ url_for('move', media_id=media.id) }}"
+                        method="POST"
+                    >
+
+                        <input
+                            type="hidden"
+                            name="folder_name"
+                            value="{{ folder.name }}"
+                        >
+
+                        <button
+                            type="submit"
+                            class="destination-button"
+                        >
+                            {{ folder.name }}
+                        </button>
+
+                    </form>
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <p>
+                Tu n'as pas encore créé de dossier de destination.
+            </p>
+
+        {% endif %}
+
+
+        <div class="create-folder">
+
+            <h3>Créer un nouveau dossier</h3>
+
+            <form
+                action="{{ url_for('create_destination') }}"
+                method="POST"
+            >
+
+                <input
+                    type="text"
+                    name="folder_name"
+                    placeholder="Nom du dossier"
+                    required
+                >
+
+                <button type="submit">
+                    Créer
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+{% else %}
+
+<section class="panel empty-state">
+
+    <h3>Tout est classé !</h3>
+
+    <p>
+        Il n'y a actuellement plus de média en attente de classement.
+    </p>
+
+    <a class="button-link" href="{{ url_for('dashboard') }}">
+        Retour au tableau de bord
+    </a>
+
+</section>
+
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}Tableau de bord — Media Organizer{% endblock %}
+
+{% block content %}
+
+<h2>Tableau de bord</h2>
+
+<section class="stats-grid">
+
+    <div class="stat-card">
+        <span class="stat-label">Total des médias</span>
+        <strong>{{ statistics.total }}</strong>
+    </div>
+
+    <div class="stat-card">
+        <span class="stat-label">Images</span>
+        <strong>{{ statistics.images }}</strong>
+    </div>
+
+    <div class="stat-card">
+        <span class="stat-label">Vidéos</span>
+        <strong>{{ statistics.videos }}</strong>
+    </div>
+
+    <div class="stat-card">
+        <span class="stat-label">À classer</span>
+        <strong>{{ statistics.pending }}</strong>
+    </div>
+
+    <div class="stat-card">
+        <span class="stat-label">Déjà classés</span>
+        <strong>{{ statistics.moved }}</strong>
+    </div>
+
+</section>
+
+
+<section class="panel">
+
+    <h3>Progression du classement</h3>
+
+    {% if statistics.total > 0 %}
+
+        {% set progress = statistics.moved / statistics.total * 100 %}
+
+        <div class="progress-bar">
+            <div
+                class="progress-fill"
+                style="width: {{ progress }}%"
+            ></div>
+        </div>
+
+        <p>
+            {{ statistics.moved }} / {{ statistics.total }} médias classés
+            ({{ "%.1f"|format(progress) }} %)
+        </p>
+
+    {% else %}
+
+        <p>Aucun média dans la base de données.</p>
+
+    {% endif %}
+
+    <p>
+        Images restantes : {{ statistics.pending_images }}
+        <br>
+        Vidéos restantes : {{ statistics.pending_videos }}
+    </p>
+
+</section>
+
+
+<section class="panel">
+
+    <h3>Scanner les médias</h3>
+
+    <p>
+        Parcourt le dossier source pour identifier les images et les vidéos.
+        Les médias déjà enregistrés ne sont pas ajoutés une deuxième fois.
+    </p>
+
+    <form action="{{ url_for('scan') }}" method="POST">
+        <button type="submit">Lancer le scan</button>
+    </form>
+
+</section>
+
+
+{% if scan_report %}
+
+<section class="panel">
+
+    <h3>Dernier scan</h3>
+
+    <p>
+        Date :
+        {{ scan_report.scan_time }}
+    </p>
+
+    <p>
+        Fichiers parcourus : {{ scan_report.total_files }}
+        <br>
+        Images détectées : {{ scan_report.image_files }}
+        <br>
+        Vidéos détectées : {{ scan_report.video_files }}
+        <br>
+        Fichiers ignorés : {{ scan_report.ignored_files }}
+    </p>
+
+    <h4>Formats détectés</h4>
+
+    {% if scan_report.detected_formats %}
+
+        <ul>
+            {% for format_name, count in scan_report.detected_formats.items() %}
+                <li>{{ format_name }} : {{ count }}</li>
+            {% endfor %}
+        </ul>
+
+    {% else %}
+
+        <p>Aucun format reconnu.</p>
+
+    {% endif %}
+
+
+    <h4>Extensions ignorées</h4>
+
+    {% if scan_report.ignored_extensions %}
+
+        <ul>
+            {% for extension, count in scan_report.ignored_extensions.items() %}
+                <li>{{ extension }} : {{ count }}</li>
+            {% endfor %}
+        </ul>
+
+    {% else %}
+
+        <p>Aucun fichier ignoré.</p>
+
+    {% endif %}
+
+</section>
+
+{% endif %}
+
+
+<section class="panel">
+
+    <h3>Dossiers de destination</h3>
+
+    {% if destination_folders %}
+
+        <ul>
+            {% for folder in destination_folders %}
+                <li>{{ folder.name }}</li>
+            {% endfor %}
+        </ul>
+
+    {% else %}
+
+        <p>Aucun dossier de destination pour le moment.</p>
+
+    {% endif %}
+
+</section>
+
+
+<section class="panel">
+
+    <a class="button-link" href="{{ url_for('classify') }}">
+        Commencer le classement
+    </a>
+
+</section>
+
+{% endblock %}
