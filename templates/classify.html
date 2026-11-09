@@ -8,7 +8,24 @@
 {% if media %}
 
 <div class="classify-header">
-    <h2>Classement des médias</h2>
+    <div class="classify-title-actions">
+        <h2>Classement des médias</h2>
+
+        {% if last_move %}
+            <form
+                action="{{ url_for('undo_last_move') }}"
+                method="POST"
+            >
+                <button
+                    type="submit"
+                    class="undo-button"
+                    title="Annuler le dernier déplacement"
+                >
+                    ↩ Annuler le dernier déplacement
+                </button>
+            </form>
+        {% endif %}
+    </div>
 
     <div class="media-navigation" aria-label="Navigation entre les médias">
 
