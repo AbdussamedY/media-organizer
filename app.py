@@ -25,7 +25,9 @@ from core.database import (
     get_next_pending_media,
     get_pending_media_by_id,
     get_pending_media_navigation,
-    mark_media_moved
+    mark_media_moved,
+    get_last_active_move,
+    mark_move_undone
 )
 
 from core.scanner import scan_directory
@@ -33,7 +35,8 @@ from core.scanner import scan_directory
 from core.organizer import (
     get_destination_folders,
     create_destination_folder,
-    move_media
+    move_media,
+    undo_move
 )
 
 
@@ -169,6 +172,8 @@ def classify():
         }
     )
 
+    last_move = get_last_active_move()
+
     return render_template(
         "classify.html",
         media=media,
@@ -176,7 +181,8 @@ def classify():
         previous_media_id=navigation["previous_id"],
         next_media_id=navigation["next_id"],
         media_position=navigation["position"],
-        pending_total=navigation["total"]
+        pending_total=navigation["total"],
+        last_move=last_move
     )
 
 
@@ -241,6 +247,41 @@ def move(media_id):
         return redirect(url_for("classify", media_id=media_id))
 
     return redirect(url_for("classify"))
+
+
+@app.route("/undo-last-move", methods=["POST"])
+def undo_last_move():
+
+    last_move = get_last_active_move()
+
+    if last_move is None:
+        flash("Aucun déplacement à annuler.", "error")
+        return redirect(url_for("classify"))
+
+    try:
+        undo_move(
+            source_path=last_move["source_path"],
+            destination_path=last_move["destination_path"]
+        )
+
+        mark_move_undone(last_move["id"])
+
+        flash(
+            f"{last_move['filename']} a été remis à son emplacement précédent.",
+            "success"
+        )
+
+        return redirect(
+            url_for("classify", media_id=last_move["media_id"])
+        )
+
+    except Exception as error:
+        flash(
+            f"Impossible d'annuler le déplacement : {error}",
+            "error"
+        )
+        return redirect(url_for("classify"))
+
 
 
 @app.route("/create-destination", methods=["POST"])
