@@ -160,9 +160,28 @@ input {
     margin-bottom: 12px;
 }
 
-.classify-header h2 {
+.classify-title-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.classify-title-actions h2 {
     margin: 0;
     font-size: 20px;
+}
+
+.classify-title-actions form {
+    margin: 0;
+}
+
+.undo-button {
+    padding: 8px 12px;
+    background: #8c4b2f;
+}
+
+.undo-button:hover {
+    background: #a85b39;
 }
 
 .media-navigation {
@@ -365,6 +384,10 @@ input {
     .classify-header {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .classify-title-actions {
+        justify-content: space-between;
     }
 
     .classify-layout {
