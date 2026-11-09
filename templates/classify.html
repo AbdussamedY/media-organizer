@@ -69,7 +69,11 @@
                 <video
                     class="media-preview"
                     controls
-                    preload="metadata"
+                    autoplay
+                    loop
+                    muted
+                    playsinline
+                    preload="auto"
                 >
                     <source
                         src="{{ url_for('serve_media', media_id=media.id) }}"
