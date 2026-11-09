@@ -95,3 +95,35 @@ def move_media(source_path, destination_folder):
     os.rename(source_path, destination_path)
 
     return destination_path
+
+
+def undo_move(source_path, destination_path):
+    """Replace un média à son emplacement précédent."""
+
+    source_path = Path(source_path).resolve()
+    destination_path = Path(destination_path).resolve()
+
+    if not destination_path.is_file():
+        raise FileNotFoundError(
+            f"Le média déplacé n'existe plus : {destination_path}"
+        )
+
+    if source_path.exists():
+        raise FileExistsError(
+            f"Un fichier existe déjà à l'emplacement d'origine : {source_path}"
+        )
+
+    source_path.parent.mkdir(parents=True, exist_ok=True)
+
+    source_device = os.stat(destination_path).st_dev
+    destination_device = os.stat(source_path.parent).st_dev
+
+    if source_device != destination_device:
+        raise OSError(
+            "Le média et son emplacement d'origine sont sur "
+            "des volumes différents. L'annulation native n'est pas possible."
+        )
+
+    os.rename(destination_path, source_path)
+
+    return source_path
