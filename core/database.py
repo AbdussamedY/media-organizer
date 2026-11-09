@@ -34,6 +34,18 @@ def initialize_database():
         """)
 
         connection.execute("""
+            CREATE TABLE IF NOT EXISTS move_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                media_id INTEGER NOT NULL,
+                source_path TEXT NOT NULL,
+                destination_path TEXT NOT NULL,
+                moved_at TEXT NOT NULL,
+                undone_at TEXT,
+                FOREIGN KEY (media_id) REFERENCES media(id)
+            )
+        """)
+
+        connection.execute("""
             CREATE TABLE IF NOT EXISTS scan_reports (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 scan_time TEXT NOT NULL,
@@ -215,6 +227,33 @@ def mark_media_moved(media_id, new_path):
     new_path = Path(new_path).resolve()
 
     with get_connection() as connection:
+        media = connection.execute("""
+            SELECT current_path
+            FROM media
+            WHERE id = ?
+        """, (media_id,)).fetchone()
+
+        if media is None:
+            raise ValueError("Média introuvable.")
+
+        moved_at = datetime.now().isoformat(timespec="seconds")
+        source_path = media["current_path"]
+
+        connection.execute("""
+            INSERT INTO move_history (
+                media_id,
+                source_path,
+                destination_path,
+                moved_at
+            )
+            VALUES (?, ?, ?, ?)
+        """, (
+            media_id,
+            source_path,
+            str(new_path),
+            moved_at
+        ))
+
         connection.execute("""
             UPDATE media
             SET
@@ -226,8 +265,57 @@ def mark_media_moved(media_id, new_path):
         """, (
             str(new_path),
             str(new_path.parent),
-            datetime.now().isoformat(timespec="seconds"),
+            moved_at,
             media_id
+        ))
+
+
+def get_last_active_move():
+    with get_connection() as connection:
+        move = connection.execute("""
+            SELECT
+                move_history.*,
+                media.filename
+            FROM move_history
+            JOIN media ON media.id = move_history.media_id
+            WHERE move_history.undone_at IS NULL
+            ORDER BY move_history.id DESC
+            LIMIT 1
+        """).fetchone()
+
+    return move
+
+
+def mark_move_undone(move_id):
+    with get_connection() as connection:
+        move = connection.execute("""
+            SELECT *
+            FROM move_history
+            WHERE id = ? AND undone_at IS NULL
+        """, (move_id,)).fetchone()
+
+        if move is None:
+            raise ValueError("Ce déplacement ne peut plus être annulé.")
+
+        undone_at = datetime.now().isoformat(timespec="seconds")
+
+        connection.execute("""
+            UPDATE move_history
+            SET undone_at = ?
+            WHERE id = ?
+        """, (undone_at, move_id))
+
+        connection.execute("""
+            UPDATE media
+            SET
+                current_path = ?,
+                destination_path = NULL,
+                status = 'pending',
+                moved_at = NULL
+            WHERE id = ?
+        """, (
+            move["source_path"],
+            move["media_id"]
         ))
 
 
