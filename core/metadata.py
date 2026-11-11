@@ -62,22 +62,52 @@ def _image_metadata(path, sections):
 
             for tag_id, value in exif.items():
                 tag_name = ExifTags.TAGS.get(tag_id, f"Tag {tag_id}")
-                if tag_name == "GPSInfo":
-                    try:
-                        gps = value
-                        gps_decoded = []
-                        for gps_id, gps_value in gps.items():
-                            gps_name = ExifTags.GPSTAGS.get(
-                                gps_id, f"GPS {gps_id}"
-                            )
-                            gps_decoded.append(
-                                (gps_name, _display_value(gps_value))
-                            )
-                        gps_values.extend(gps_decoded)
-                    except Exception:
-                        gps_values.append(("GPSInfo", _display_value(value)))
-                else:
+                if tag_name != "GPSInfo":
                     decoded.append((tag_name, value))
+
+            # Les sous-IFD EXIF et GPS sont stockés séparément dans de
+            # nombreux fichiers et ne sont pas toujours exposés par items().
+            try:
+                exif_ifd = exif.get_ifd(ExifTags.IFD.Exif)
+                decoded.extend(
+                    (ExifTags.TAGS.get(tag_id, f"EXIF {tag_id}"), value)
+                    for tag_id, value in exif_ifd.items()
+                )
+            except (AttributeError, KeyError, TypeError):
+                pass
+
+            try:
+                gps = exif.get_ifd(ExifTags.IFD.GPSInfo)
+                for gps_id, gps_value in gps.items():
+                    gps_name = ExifTags.GPSTAGS.get(
+                        gps_id, f"GPS {gps_id}"
+                    )
+                    gps_values.append((gps_name, gps_value))
+
+                def to_decimal(coordinates, reference):
+                    if not coordinates or len(coordinates) != 3:
+                        return None
+                    degrees, minutes, seconds = [
+                        float(value) for value in coordinates
+                    ]
+                    decimal = degrees + minutes / 60 + seconds / 3600
+                    if reference in ("S", "W"):
+                        decimal *= -1
+                    return decimal
+
+                latitude = to_decimal(
+                    gps.get(2), gps.get(1)
+                )
+                longitude = to_decimal(
+                    gps.get(4), gps.get(3)
+                )
+                if latitude is not None:
+                    gps_values.append(("Latitude décimale", latitude))
+                if longitude is not None:
+                    gps_values.append(("Longitude décimale", longitude))
+
+            except (AttributeError, KeyError, TypeError, ValueError):
+                pass
 
             _add_section(sections, "Métadonnées EXIF", decoded)
             _add_section(sections, "GPS", gps_values)
@@ -205,7 +235,11 @@ def get_media_metadata(path, media_type):
         ("Type détecté", media_type),
         ("Chemin actuel", str(path.resolve())),
         ("Taille", f"{size_bytes:,} octets ({size_mib:.2f} Mio)"),
-        ("Création (système)", datetime.fromtimestamp(stat.st_ctime).astimezone().isoformat(timespec="seconds")),
+        ("Création (système)", (
+            datetime.fromtimestamp(stat.st_birthtime).astimezone().isoformat(timespec="seconds")
+            if hasattr(stat, "st_birthtime") else None
+        )),
+        ("Changement métadonnées (système)", datetime.fromtimestamp(stat.st_ctime).astimezone().isoformat(timespec="seconds")),
         ("Modification (système)", datetime.fromtimestamp(stat.st_mtime).astimezone().isoformat(timespec="seconds")),
     ])
 
