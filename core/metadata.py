@@ -53,6 +53,16 @@ def _image_metadata(path, sections):
                 ("Animation", getattr(image, "n_frames", 1) > 1),
             ])
 
+            # Certaines informations (DPI, logiciel, commentaire, durée
+            # d'animation, etc.) sont exposées hors du dictionnaire EXIF.
+            image_info = [
+                (key, value)
+                for key, value in image.info.items()
+                if key.lower() not in {"exif", "icc_profile"}
+                and not isinstance(value, bytes)
+            ]
+            _add_section(sections, "Informations intégrées à l'image", image_info)
+
             exif = image.getexif()
             if not exif:
                 return
