@@ -31,6 +31,7 @@ from core.database import (
 )
 
 from core.scanner import scan_directory
+from core.metadata import get_media_metadata
 
 from core.organizer import (
     get_destination_folders,
@@ -174,6 +175,24 @@ def classify():
 
     last_move = get_last_active_move()
 
+    media_metadata = []
+    if media is not None:
+        media_path = Path(media["current_path"])
+        if media_path.is_file():
+            try:
+                media_metadata = get_media_metadata(
+                    media_path,
+                    media["media_type"]
+                )
+            except Exception as error:
+                media_metadata = [{
+                    "title": "Métadonnées",
+                    "items": [{
+                        "label": "Erreur",
+                        "value": str(error)
+                    }]
+                }]
+
     return render_template(
         "classify.html",
         media=media,
@@ -182,7 +201,8 @@ def classify():
         next_media_id=navigation["next_id"],
         media_position=navigation["position"],
         pending_total=navigation["total"],
-        last_move=last_move
+        last_move=last_move,
+        media_metadata=media_metadata
     )
 
 
