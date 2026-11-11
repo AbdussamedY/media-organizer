@@ -113,6 +113,28 @@
                 · {{ media.detected_format }}
             </span>
 
+            <details class="metadata-details">
+                <summary>Afficher toutes les informations et métadonnées</summary>
+
+                <div class="metadata-sections">
+                    {% for section in media_metadata %}
+                        <section class="metadata-group">
+                            <h4>{{ section.title }}</h4>
+                            <dl>
+                                {% for item in section.items %}
+                                    <div class="metadata-row">
+                                        <dt>{{ item.label }}</dt>
+                                        <dd>{{ item.value }}</dd>
+                                    </div>
+                                {% endfor %}
+                            </dl>
+                        </section>
+                    {% else %}
+                        <p>Aucune métadonnée supplémentaire disponible.</p>
+                    {% endfor %}
+                </div>
+            </details>
+
         </div>
 
     </div>
