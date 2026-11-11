@@ -121,7 +121,7 @@
                         <section class="metadata-group">
                             <h4>{{ section.title }}</h4>
                             <dl>
-                                {% for item in section.items %}
+                                {% for item in section['items'] %}
                                     <div class="metadata-row">
                                         <dt>{{ item.label }}</dt>
                                         <dd>{{ item.value }}</dd>
