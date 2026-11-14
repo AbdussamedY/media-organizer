@@ -12,6 +12,7 @@
     <div class="stat-card"><span class="stat-label">Vidéos</span><strong>{{ statistics.videos }}</strong></div>
     <div class="stat-card"><span class="stat-label">À classer</span><strong>{{ statistics.pending }}</strong></div>
     <div class="stat-card"><span class="stat-label">Déjà classés</span><strong>{{ statistics.moved }}</strong></div>
+    <div class="stat-card"><span class="stat-label">Introuvables dans la synchronisation</span><strong>{{ statistics.missing }}</strong></div>
 </section>
 
 <section class="panel">
@@ -31,7 +32,7 @@
 
 <section class="panel">
     <h3>Scanner les médias</h3>
-    <p>Parcourt le dossier source pour identifier les images et les vidéos. Les médias déjà enregistrés ne sont pas ajoutés une deuxième fois.</p>
+    <p>Parcourt le dossier source pour identifier les images et les vidéos. Le scan synchronise la base avec les fichiers réellement présents et tente de reconnaître un même média même après un changement de chemin ou d'ordinateur.</p>
 
     <button id="scan-button" type="button">Lancer le scan</button>
 
