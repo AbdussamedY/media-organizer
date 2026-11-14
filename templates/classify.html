@@ -111,6 +111,9 @@
             <span>
                 {{ "Image" if media.media_type == "image" else "Vidéo" }}
                 · {{ media.detected_format }}
+                {% if media_date %}
+                    · {{ media_date }}
+                {% endif %}
             </span>
 
             <details class="metadata-details">
