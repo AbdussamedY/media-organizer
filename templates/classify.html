@@ -219,6 +219,39 @@
 
 
 <script>
+/*
+ * Conserve la position de défilement de la liste des destinations entre
+ * deux médias. C'est particulièrement utile sur mobile : si plusieurs
+ * médias consécutifs vont dans le même dossier, la liste reste exactement
+ * là où l'utilisateur l'a laissée.
+ */
+const destinationList = document.querySelector(".destination-list");
+const destinationScrollKey = "media-organizer.destination-list-scroll-top";
+
+if (destinationList) {
+    const savedScrollTop = sessionStorage.getItem(destinationScrollKey);
+
+    if (savedScrollTop !== null) {
+        destinationList.scrollTop = Number(savedScrollTop);
+    }
+
+    destinationList.addEventListener("scroll", function () {
+        sessionStorage.setItem(
+            destinationScrollKey,
+            String(destinationList.scrollTop)
+        );
+    }, { passive: true });
+
+    document.querySelectorAll(".destination-list form").forEach(function (form) {
+        form.addEventListener("submit", function () {
+            sessionStorage.setItem(
+                destinationScrollKey,
+                String(destinationList.scrollTop)
+            );
+        });
+    });
+}
+
 document.addEventListener("keydown", function (event) {
     if (
         event.altKey ||
