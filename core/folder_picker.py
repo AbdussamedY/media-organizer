@@ -24,17 +24,20 @@ selected_dir = None
 
 root = tk.Tk()
 root.title(title)
-root.geometry("900x650")
-root.minsize(720, 500)
-root.configure(padx=18, pady=16)
+root.geometry("1150x800")
+root.minsize(900, 650)
+root.configure(padx=24, pady=22)
+
+# Augmente l’échelle globale de Tkinter (notamment utile sur les écrans HiDPI).
+root.tk.call("tk", "scaling", 1.6)
 
 # Police et espacements plus confortables que ceux du sélecteur standard.
-root.option_add("*Font", ("TkDefaultFont", 12))
+root.option_add("*Font", ("TkDefaultFont", 17))
 style = ttk.Style(root)
-style.configure("Treeview", font=("TkDefaultFont", 12), rowheight=30)
-style.configure("Treeview.Heading", font=("TkDefaultFont", 12, "bold"))
-style.configure("TButton", font=("TkDefaultFont", 11), padding=(12, 7))
-style.configure("Path.TEntry", font=("TkDefaultFont", 11), padding=7)
+style.configure("Treeview", font=("TkDefaultFont", 17), rowheight=42)
+style.configure("Treeview.Heading", font=("TkDefaultFont", 22, "bold"))
+style.configure("TButton", font=("TkDefaultFont", 16), padding=(16, 11))
+style.configure("Path.TEntry", font=("TkDefaultFont", 16), padding=10)
 
 heading = ttk.Label(root, text="Choisir un dossier", font=("TkDefaultFont", 17, "bold"))
 heading.pack(anchor="w", pady=(0, 12))
