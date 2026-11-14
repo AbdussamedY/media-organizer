@@ -1,1 +1,5 @@
 .venv
+
+# Configuration locale : chemins propres à chaque ordinateur
+data/settings.json
+data/settings.tmp
