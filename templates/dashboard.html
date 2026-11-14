@@ -6,6 +6,13 @@
 
 <h2>Tableau de bord</h2>
 
+<section class="panel configured-paths">
+    <h3>Dossiers configurés</h3>
+    <p><strong>Source :</strong> <span>{{ source_path }}</span></p>
+    <p><strong>Destination :</strong> <span>{{ destination_path }}</span></p>
+    <a class="button-link" href="{{ url_for('settings') }}">Modifier les dossiers</a>
+</section>
+
 <section class="stats-grid">
     <div class="stat-card"><span class="stat-label">Total des médias</span><strong>{{ statistics.total }}</strong></div>
     <div class="stat-card"><span class="stat-label">Images</span><strong>{{ statistics.images }}</strong></div>
