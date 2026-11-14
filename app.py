@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 from threading import Lock, Thread
 
@@ -41,6 +42,56 @@ scan_status = {
 
 def is_configured():
     return load_settings() is not None
+
+
+def get_media_date(media_path, media_metadata):
+    """Retourne la meilleure date disponible pour l'affichage rapide."""
+    preferred_labels = (
+        "DateTimeOriginal",
+        "DateTimeDigitized",
+        "CreationDate",
+        "com.apple.quicktime.creationdate",
+        "date",
+        "creation_time",
+        "Modification (système)",
+    )
+
+    values = {
+        item["label"]: item["value"]
+        for section in media_metadata
+        for item in section.get("items", [])
+    }
+
+    for label in preferred_labels:
+        value = values.get(label)
+        if not value:
+            continue
+
+        text = str(value).strip()
+
+        # EXIF classique : 2024:08:17 14:32:10
+        for fmt in ("%Y:%m:%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S%z"):
+            try:
+                return datetime.strptime(text, fmt).strftime("%d/%m/%Y")
+            except ValueError:
+                pass
+
+        try:
+            return datetime.fromisoformat(text.replace("Z", "+00:00")).strftime(
+                "%d/%m/%Y"
+            )
+        except ValueError:
+            pass
+
+        # Certaines métadonnées contiennent déjà une date lisible.
+        return text
+
+    try:
+        return datetime.fromtimestamp(
+            media_path.stat().st_mtime
+        ).strftime("%d/%m/%Y")
+    except OSError:
+        return None
 
 
 def update_scan_status(progress):
@@ -183,11 +234,13 @@ def classify():
     last_move = get_last_active_move()
 
     media_metadata = []
+    media_date = None
     if media is not None:
         media_path = Path(media["current_path"])
         if media_path.is_file():
             try:
                 media_metadata = get_media_metadata(media_path, media["media_type"])
+                media_date = get_media_date(media_path, media_metadata)
             except Exception as error:
                 media_metadata = [{
                     "title": "Métadonnées",
@@ -204,6 +257,7 @@ def classify():
         pending_total=navigation["total"],
         last_move=last_move,
         media_metadata=media_metadata,
+        media_date=media_date,
     )
 
 
