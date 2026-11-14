@@ -1,129 +1,79 @@
 import os
 from pathlib import Path
 
-from config import DESTINATION_ROOT
+from config import get_destination_root
 
 
 def get_destination_folders():
-    """
-    Retourne les sous-dossiers immédiats du dossier de destination.
-    """
-
-    DESTINATION_ROOT.mkdir(parents=True, exist_ok=True)
-
+    """Retourne les sous-dossiers immédiats du dossier de destination."""
+    destination_root = get_destination_root()
+    destination_root.mkdir(parents=True, exist_ok=True)
     return sorted(
-        [
-            folder
-            for folder in DESTINATION_ROOT.iterdir()
-            if folder.is_dir()
-        ],
+        [folder for folder in destination_root.iterdir() if folder.is_dir()],
         key=lambda folder: folder.name.lower()
     )
 
 
 def create_destination_folder(folder_name):
-    """
-    Crée un dossier de destination.
-    """
-
+    """Crée un dossier dans la destination actuellement configurée."""
     folder_name = folder_name.strip()
-
-    if not folder_name:
-        raise ValueError("Le nom du dossier ne peut pas être vide.")
-
-    if folder_name in {".", ".."}:
+    if not folder_name or folder_name in {".", ".."}:
         raise ValueError("Nom de dossier invalide.")
-
     if Path(folder_name).name != folder_name:
         raise ValueError("Le nom ne doit pas contenir de chemin.")
 
-    destination = DESTINATION_ROOT / folder_name
-
-    destination.mkdir(exist_ok=True)
-
+    destination = get_destination_root() / folder_name
+    destination.mkdir(parents=True, exist_ok=True)
     if not destination.is_dir():
         raise ValueError("Un fichier portant ce nom existe déjà.")
-
     return destination
 
 
 def move_media(source_path, destination_folder):
-    """
-    Déplace un média dans un dossier de destination.
-
-    Le dossier de destination doit être un sous-dossier immédiat
-    de DESTINATION_ROOT.
-    """
-
+    """Déplace un média vers un sous-dossier de la destination configurée."""
     source_path = Path(source_path).resolve()
     destination_folder = Path(destination_folder).resolve()
-    destination_root = DESTINATION_ROOT.resolve()
+    destination_root = get_destination_root().resolve()
 
     if not source_path.is_file():
-        raise FileNotFoundError(
-            f"Le média source n'existe pas : {source_path}"
-        )
-
+        raise FileNotFoundError(f"Le média source n'existe pas : {source_path}")
     if destination_folder.parent != destination_root:
-        raise ValueError(
-            "Le dossier de destination n'est pas autorisé."
-        )
-
+        raise ValueError("Le dossier de destination n'est pas autorisé.")
     if not destination_folder.is_dir():
-        raise NotADirectoryError(
-            "Le dossier de destination n'existe pas."
-        )
+        raise NotADirectoryError("Le dossier de destination n'existe pas.")
 
     destination_path = destination_folder / source_path.name
-
     if destination_path.exists():
         raise FileExistsError(
-            f"Un fichier nommé {source_path.name} existe déjà "
-            f"dans {destination_folder.name}."
+            f"Un fichier nommé {source_path.name} existe déjà dans {destination_folder.name}."
         )
 
-    source_device = os.stat(source_path).st_dev
-    destination_device = os.stat(destination_folder).st_dev
-
-    if source_device != destination_device:
+    if os.stat(source_path).st_dev != os.stat(destination_folder).st_dev:
         raise OSError(
-            "Le fichier source et le dossier de destination "
-            "sont sur des volumes différents. "
+            "Le fichier source et le dossier de destination sont sur des volumes différents. "
             "Le déplacement natif n'est pas possible."
         )
 
     os.rename(source_path, destination_path)
-
     return destination_path
 
 
 def undo_move(source_path, destination_path):
     """Replace un média à son emplacement précédent."""
-
     source_path = Path(source_path).resolve()
     destination_path = Path(destination_path).resolve()
 
     if not destination_path.is_file():
-        raise FileNotFoundError(
-            f"Le média déplacé n'existe plus : {destination_path}"
-        )
-
+        raise FileNotFoundError(f"Le média déplacé n'existe plus : {destination_path}")
     if source_path.exists():
-        raise FileExistsError(
-            f"Un fichier existe déjà à l'emplacement d'origine : {source_path}"
-        )
+        raise FileExistsError(f"Un fichier existe déjà à l'emplacement d'origine : {source_path}")
 
     source_path.parent.mkdir(parents=True, exist_ok=True)
-
-    source_device = os.stat(destination_path).st_dev
-    destination_device = os.stat(source_path.parent).st_dev
-
-    if source_device != destination_device:
+    if os.stat(destination_path).st_dev != os.stat(source_path.parent).st_dev:
         raise OSError(
-            "Le média et son emplacement d'origine sont sur "
-            "des volumes différents. L'annulation native n'est pas possible."
+            "Le média et son emplacement d'origine sont sur des volumes différents. "
+            "L'annulation native n'est pas possible."
         )
 
     os.rename(destination_path, source_path)
-
     return source_path
