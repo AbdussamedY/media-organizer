@@ -528,3 +528,90 @@ input {
         max-height: 260px;
     }
 }
+
+
+/* Configuration des dossiers */
+.setup-panel {
+    max-width: 850px;
+    margin: 40px auto;
+}
+
+.setup-intro {
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 28px;
+}
+
+.path-field {
+    margin: 24px 0;
+}
+
+.path-field label {
+    display: block;
+    margin-bottom: 9px;
+    font-weight: 600;
+}
+
+.path-picker-row {
+    display: flex;
+    gap: 10px;
+}
+
+.path-picker-row input {
+    flex: 1 1 auto;
+    min-width: 0;
+    background: #f8f8f8;
+    color: #333;
+}
+
+.secondary-button,
+.secondary-link {
+    background: #e9edf2;
+    color: #263746;
+}
+
+.secondary-button:hover,
+.secondary-link:hover {
+    background: #dce3ea;
+}
+
+.secondary-button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.setup-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 28px;
+}
+
+.picker-status {
+    min-height: 22px;
+    color: #666;
+    font-size: 14px;
+}
+
+.picker-status.success {
+    color: #24613b;
+}
+
+.picker-status.error {
+    color: #8c2929;
+}
+
+.configured-paths p {
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 650px) {
+    .path-picker-row {
+        flex-direction: column;
+    }
+
+    .setup-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+}
