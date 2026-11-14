@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Configuration — Media Organizer{% endblock %}
+
+{% block content %}
+<section class="panel setup-panel">
+    <h2>{{ "Configurer Media Organizer" if not configured else "Paramètres des dossiers" }}</h2>
+    <p class="setup-intro">
+        Sélectionne le dossier qui contient les médias à classer et celui dans
+        lequel les médias classés seront déplacés.
+    </p>
+
+    <form action="{{ url_for('save_settings_route') }}" method="POST">
+        <div class="path-field">
+            <label for="source_root">Dossier source — médias à classer</label>
+            <div class="path-picker-row">
+                <input type="text" id="source_root" name="source_root"
+                       value="{{ source_path }}" placeholder="Aucun dossier sélectionné"
+                       readonly required>
+                <button type="button" class="secondary-button" data-target="source_root">Parcourir…</button>
+            </div>
+        </div>
+
+        <div class="path-field">
+            <label for="destination_root">Dossier de destination — médias classés</label>
+            <div class="path-picker-row">
+                <input type="text" id="destination_root" name="destination_root"
+                       value="{{ destination_path }}" placeholder="Aucun dossier sélectionné"
+                       readonly required>
+                <button type="button" class="secondary-button" data-target="destination_root">Parcourir…</button>
+            </div>
+        </div>
+
+        <p id="picker-status" class="picker-status" role="status"></p>
+        <div class="setup-actions">
+            <button type="submit">Enregistrer la configuration</button>
+            {% if configured %}
+                <a class="button-link secondary-link" href="{{ url_for('dashboard') }}">Annuler</a>
+            {% endif %}
+        </div>
+    </form>
+</section>
+
+<script>
+(() => {
+    const status = document.getElementById("picker-status");
+    document.querySelectorAll("[data-target]").forEach(button => {
+        button.addEventListener("click", async () => {
+            const input = document.getElementById(button.dataset.target);
+            const originalText = button.textContent;
+            button.disabled = true;
+            button.textContent = "Ouverture…";
+            status.textContent = "Ouverture du sélecteur de dossiers…";
+            status.className = "picker-status";
+
+            try {
+                const response = await fetch("{{ url_for('select_folder_route') }}", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({target: input.id, current_path: input.value})
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || "Impossible d'ouvrir le sélecteur.");
+
+                if (result.path) {
+                    input.value = result.path;
+                    status.textContent = "Dossier sélectionné.";
+                    status.className = "picker-status success";
+                } else {
+                    status.textContent = "Sélection annulée.";
+                }
+            } catch (error) {
+                status.textContent = error.message;
+                status.className = "picker-status error";
+            } finally {
+                button.disabled = false;
+                button.textContent = originalText;
+            }
+        });
+    });
+})();
+</script>
+{% endblock %}
